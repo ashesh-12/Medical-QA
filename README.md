@@ -1,3 +1,2 @@
 # Medical-QA
 
-pcsk_tPoiZ_8P9kEQxj2wWU1JSH5eCumxc9M82QuZbZoTnMZTwtmKY8zwKeNHw6vmEhSMdRXb7
