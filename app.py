@@ -19,18 +19,22 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
-embeddings = download_embeddings()
+retriever = None
 
-index_name = "medical-qa"
-docsearch = PineconeVectorStore.from_existing_index(
-    index_name=index_name,
-    embedding=embeddings
-)
-
-retriever = docsearch.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 3}
-)
+def get_retriever():
+    global retriever
+    if retriever is None:
+        embeddings = download_embeddings()
+        index_name = "medical-qa"
+        docsearch = PineconeVectorStore.from_existing_index(
+            index_name=index_name,
+            embedding=embeddings
+        )
+        retriever = docsearch.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": 3}
+        )
+    return retriever
 
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
@@ -42,8 +46,6 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
-question_answering_chain = create_stuff_documents_chain(llm, prompt)
-rag_chain = create_retrieval_chain(retriever, question_answering_chain)
 
 @app.route('/')
 def index():
@@ -52,8 +54,11 @@ def index():
 @app.route('/get', methods=["GET", 'POST'])
 def chat():
     msg = request.form["msg"]
-    input = msg
-    print(input)
+    print(msg)
+    
+    question_answering_chain = create_stuff_documents_chain(llm, prompt)
+    rag_chain = create_retrieval_chain(get_retriever(), question_answering_chain)
+    
     response = rag_chain.invoke({"input": msg})
     print("Response: ", response["answer"])
     return str(response["answer"])
