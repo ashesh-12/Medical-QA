@@ -1,81 +1,575 @@
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
 <!DOCTYPE html>
-<html>
-	<head>
-		<title>Chatbot</title>
-		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css')}}"/>
-	</head>
-	
-	
-	<body>
-		<div class="container-fluid h-100">
-			<div class="row justify-content-center h-100">		
-				<div class="col-md-8 col-xl-6 chat">
-					<div class="card">
-						<div class="card-header msg_head">
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="https://cdn-icons-png.flaticon.com/512/387/387569.png" class="rounded-circle user_img">
-									<!-- <img src="https://www.prdistribution.com/spirit/uploads/pressreleases/2019/newsreleases/d83341deb75c4c4f6b113f27b1e42cd8-chatbot-florence-already-helps-thousands-of-patients-to-remember-their-medication.png" class="rounded-circle user_img"> -->
-									<span class="online_icon"></span>
-								</div>
-								<div class="user_info">
-									<span>Medical Chatbot</span>
-									<p>Ask me anything!</p>
-								</div>
-							</div>
-						</div>
-						<div id="messageFormeight" class="card-body msg_card_body">
-							
-							
-						</div>
-						<div class="card-footer">
-							<form id="messageArea" class="input-group">
-                                <input type="text" id="text" name="msg" placeholder="Type your message..." autocomplete="off" class="form-control type_msg" required/>
-								<div class="input-group-append">
-									<button type="submit" id="send" class="input-group-text send_btn"><i class="fas fa-location-arrow"></i></button>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		
-		<script>
-			$(document).ready(function() {
-				$("#messageArea").on("submit", function(event) {
-					const date = new Date();
-					const hour = date.getHours();
-					const minute = date.getMinutes();
-					const str_time = hour+":"+minute;
-					var rawText = $("#text").val();
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Medical Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-					var userHtml = '<div class="d-flex justify-content-end mb-4"><div class="msg_cotainer_send">' + rawText + '<span class="msg_time_send">'+ str_time + '</span></div><div class="img_cont_msg"><img src="https://i.ibb.co/d5b84Xw/Untitled-design.png" class="rounded-circle user_img_msg"></div></div>';
-					
-					$("#text").val("");
-					$("#messageFormeight").append(userHtml);
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-					$.ajax({
-						data: {
-							msg: rawText,	
-						},
-						type: "POST",
-						url: "/get",
-					}).done(function(data) {
-						var botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://cdn-icons-png.flaticon.com/512/387/387569.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data + '<span class="msg_time">' + str_time + '</span></div></div>';
-						$("#messageFormeight").append($.parseHTML(botHtml));
-					});
-					event.preventDefault();
-				});
-			});
-		</script>
-        
-    </body>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --border: #e8ecf0;
+      --text-primary: #1a1d23;
+      --text-secondary: #7a8394;
+      --accent: #2563eb;
+      --accent-light: #eff4ff;
+      --bot-bubble: #ffffff;
+      --user-bubble: #2563eb;
+      --user-bubble-text: #ffffff;
+      --bot-bubble-text: #1a1d23;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+      --radius: 18px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .chat-window {
+      width: 100%;
+      max-width: 680px;
+      height: 90vh;
+      max-height: 780px;
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Header ── */
+    .chat-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+
+    .avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .avatar-wrap img {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border);
+    }
+
+    .sama-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 13px;
+      color: white;
+      letter-spacing: 1px;
+      border: 2px solid var(--accent);
+    }
+
+    .status-dot {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 11px;
+      height: 11px;
+      background: #22c55e;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+    }
+
+    .header-info h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .header-info p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Messages ── */
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .chat-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* Row wrappers */
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      max-width: 100%;
+      animation: fadeUp 0.25s ease forwards;
+      opacity: 0;
+    }
+
+    .msg-row.bot { justify-content: flex-start; }
+    .msg-row.user { justify-content: flex-end; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sama-avatar-sm {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 8px;
+      color: white;
+      letter-spacing: 0.8px;
+      flex-shrink: 0;
+    }
+
+    .msg-avatar.user img {
+      order: 2;
+    }
+
+    .bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      max-width: 72%;
+    }
+
+    .msg-row.user .bubble-wrap {
+      align-items: flex-end;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14.5px;
+      line-height: 1.6;
+      position: relative;
+      word-break: break-word;
+    }
+
+    /* Bot bubble */
+    .msg-row.bot .bubble {
+      background: var(--bot-bubble);
+      color: var(--bot-bubble-text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow);
+    }
+
+    /* User bubble */
+    .msg-row.user .bubble {
+      background: var(--user-bubble);
+      color: var(--user-bubble-text);
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      padding: 0 4px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 4px;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-bottom-left-radius: 4px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .typing-dots span {
+      width: 7px;
+      height: 7px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── Welcome message ── */
+    .welcome-card {
+      margin: auto;
+      text-align: center;
+      padding: 32px 20px;
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    .welcome-card .icon {
+      width: 56px;
+      height: 56px;
+      background: var(--accent-light);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .welcome-card .icon i {
+      color: var(--accent);
+      font-size: 22px;
+    }
+
+    .welcome-card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .welcome-card p {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    /* ── Footer / Input ── */
+    .chat-footer {
+      padding: 16px 20px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 6px 6px 18px;
+      transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within {
+      border-color: var(--accent);
+    }
+
+    .input-row input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14.5px;
+      color: var(--text-primary);
+      outline: none;
+      padding: 6px 0;
+    }
+
+    .input-row input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .send-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .send-btn:active {
+      transform: scale(0.93);
+    }
+
+    .send-btn i {
+      color: white;
+      font-size: 14px;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page-wrapper {
+        padding: 0;
+        align-items: stretch;
+      }
+
+      .chat-window {
+        border-radius: 0;
+        height: 100vh;
+        max-height: 100vh;
+        border: none;
+      }
+
+      .bubble-wrap {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  <div class="chat-window">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="avatar-wrap">
+        <div class="sama-logo">SAMA</div>
+        <span class="status-dot"></span>
+      </div>
+      <div class="header-info">
+        <h2>Medical Assistant</h2>
+        <p>Powered by AI · Always available</p>
+      </div>
+      <span class="header-badge">Online</span>
+    </div>
+
+    <!-- Messages -->
+    <div id="chatBody" class="chat-body">
+      <div class="welcome-card">
+        <div class="icon"><i class="fas fa-heartbeat"></i></div>
+        <h3>How can I help you today?</h3>
+        <p>Ask me about symptoms, medications, or general health questions.</p>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="chat-footer">
+      <form id="messageArea">
+        <div class="input-row">
+          <input
+            type="text"
+            id="text"
+            name="msg"
+            placeholder="Type your message..."
+            autocomplete="off"
+            required
+          />
+          <button type="submit" class="send-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </form>
+      <p class="footer-note">Not a substitute for professional medical advice.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function getTime() {
+    const d = new Date();
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+    return h + ':' + m;
+  }
+
+  function scrollToBottom() {
+    const body = document.getElementById('chatBody');
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function removeWelcome() {
+    const welcome = document.querySelector('.welcome-card');
+    if (welcome) welcome.remove();
+  }
+
+  function appendMessage(html) {
+    const body = document.getElementById('chatBody');
+    body.insertAdjacentHTML('beforeend', html);
+    scrollToBottom();
+  }
+
+  function showTyping() {
+    const html = `
+      <div class="msg-row bot" id="typingRow">
+        <div class="msg-avatar">
+          <div class="sama-avatar-sm">SAMA</div>
+        </div>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>`;
+    appendMessage(html);
+  }
+
+  function removeTyping() {
+    const row = document.getElementById('typingRow');
+    if (row) row.remove();
+  }
+
+  $(document).ready(function () {
+    $('#messageArea').on('submit', function (e) {
+      e.preventDefault();
+      const text = $('#text').val().trim();
+      if (!text) return;
+
+      removeWelcome();
+
+      const time = getTime();
+
+      // User message
+      const userHtml = `
+        <div class="msg-row user">
+          <div class="bubble-wrap">
+            <div class="bubble">${text}</div>
+            <span class="msg-time">${time}</span>
+          </div>
+          <div class="msg-avatar user">
+            <img src="https://i.ibb.co/d5b84Xw/Untitled-design.png" alt="You">
+          </div>
+        </div>`;
+
+      appendMessage(userHtml);
+      $('#text').val('');
+
+      // Typing indicator
+      showTyping();
+
+      $.ajax({
+        data: { msg: text },
+        type: 'POST',
+        url: '/get',
+      }).done(function (data) {
+        removeTyping();
+        const botHtml = `
+          <div class="msg-row bot">
+            <div class="msg-avatar">
+              <div class="sama-avatar-sm">SAMA</div>
+            </div>
+            <div class="bubble-wrap">
+              <div class="bubble">${data}</div>
+              <span class="msg-time">${getTime()}</span>
+            </div>
+          </div>`;
+        appendMessage(botHtml);
+      }).fail(function () {
+        removeTyping();
+        const errHtml = `
+          <div class="msg-row bot">
+            <div class="msg-avatar">
+              <div class="sama-avatar-sm">SAMA</div>
+            </div>
+            <div class="bubble-wrap">
+              <div class="bubble">Sorry, something went wrong. Please try again.</div>
+              <span class="msg-time">${getTime()}</span>
+            </div>
+          </div>`;
+        appendMessage(errHtml);
+      });
+    });
+  });
+</script>
+
+</body>
 </html>
